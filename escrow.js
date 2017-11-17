@@ -1,8 +1,11 @@
 /*
 STATUS:
 	created
-	locked
-	complete
+	only_buyer_can_unlock
+	only_seller_can_unlock	
+	item_recieved
+	item_returned
+	aborted
 */
 
 const item = {}
@@ -81,7 +84,7 @@ function abortItem(_msgSend, _itemNumber) {
 	if (_msgSend === item[_itemNumber].sellerAddress && item[_itemNumber].status === "created"){
 
 		// change status to 'abort'
-		item[_itemNumber].status = "abort"
+		item[_itemNumber].status = "aborted"
 
 		// return funds to seller
 		// item[_itemNumber].sellerAddress.transfer(item[_itemNumber].sellerValue)
@@ -101,7 +104,7 @@ function sellerUnlock(_msgSend, _itemNumber) {
 	// if address belongs to seller and status is 'only_buyer_can_unlock'
 	if (_msgSend === item[_itemNumber].sellerAddress && item[_itemNumber].status === "only_seller_can_unlock"){
 
-		// change status to 'seller_complete'
+		// change status to 'item_returned'
 		item[_itemNumber].status = 'item_returned'
 
 		// transfer buyer value to seller

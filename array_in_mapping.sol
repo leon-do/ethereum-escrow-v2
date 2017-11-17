@@ -29,7 +29,7 @@ contract array_in_mapping{
         addressList[msg.sender].push(Address(itemNumber));
     }
 
-    function get(address _address, uint index) public returns(uint){
+    function get_items_from_address(address _address, uint index) public returns(uint){
         return addressList[_address][index].item;
     }
 }
