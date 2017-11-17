@@ -40,7 +40,7 @@ contract myContract {
     
 
 
-    
+
 
     /*
     addressList = {
@@ -58,34 +58,41 @@ contract myContract {
 
 
     
-    function createItem()
+    function add_new_item()
         payable
     {
         // new item number
         itemNumber++;
         
-        // create new item to the itemList
+        // add new item to the itemList
         itemList[itemNumber] = Item(msg.value, msg.sender, msg.sender, 0, "created");
+
+        // add new item to the addressList
+        addressList[msg.sender].push(Address(itemNumber));
     }
     
-    function getSellerValue(uint _item) returns (uint){
+    function get_seller_value(uint _item) returns (uint){
         return itemList[_item].sellerValue;
     }
     
-    function getSellerAddress(uint _item) returns (address){
+    function get_seller_address(uint _item) returns (address){
         return itemList[_item].sellerAddress;
     }
  
-    function getBuyerAddress(uint _item) returns (address){
+    function get_buyer_address(uint _item) returns (address){
         return itemList[_item].buyerAddress;
     }   
     
-    function getBuyerValue(uint _item) returns (uint){
+    function get_buyer_value(uint _item) returns (uint){
         return itemList[_item].buyerValue;
     }  
     
-    function getItemStatus(uint _item) returns (string){
+    function get_item_status(uint _item) returns (string){
         return itemList[_item].status;
-    }  
+    }
+
+    function get_item_from_address(address _address, uint index) public returns(uint){
+        return addressList[_address][index].item;
+    }
     
 }
