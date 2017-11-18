@@ -1,11 +1,9 @@
 /*
 status
-  1  created
-  2  aborted
-  3  only_buyer_can_unlock
-  4  only_seller_can_unlock  
-  5  item_recieved
-  6  item_returned
+item_created = 1
+only_buyer_can_complete = 2
+complete = 3
+canceled = 4
 */
 
 
@@ -70,15 +68,35 @@ contract myContract {
 
 
 
+    modifier condition(bool _condition) {
+        require(_condition);
+        _;
+    }
+
+
+
+
     
-    function add_new_itemNumber()
+    function create_new_item()
         payable
         returns (uint)
     {
         // new item number
         itemNumber++;
         
-        // add new item to the itemList
+        /* 
+        add new item to the itemList.
+        {        
+            sellerValue: 12,
+            sellerAddress: 0xSeller
+            buyerAddress: 0xBuyer
+            buyerValue: 0
+            status: 1 
+        }
+
+        status of 1 means only the seller can unlock
+
+        */
         itemList[itemNumber] = Item(msg.value, msg.sender, msg.sender, 0, 1);
 
         // add new item to the addressList
@@ -88,14 +106,6 @@ contract myContract {
         return itemNumber;
     }
     
-    function get_seller_value(uint _itemNumber) returns (uint){
-        return itemList[_itemNumber].sellerValue;
-    }
-    
-    function get_seller_address(uint _itemNumber) returns (address){
-        return itemList[_itemNumber].sellerAddress;
-    }
- 
     function get_buyer_address(uint _itemNumber) returns (address){
         return itemList[_itemNumber].buyerAddress;
     }   
@@ -103,30 +113,76 @@ contract myContract {
     function get_buyer_value(uint _itemNumber) returns (uint){
         return itemList[_itemNumber].buyerValue;
     }  
+
+    function get_seller_address(uint _itemNumber) returns (address){
+        return itemList[_itemNumber].sellerAddress;
+    }
+
+    function get_seller_value(uint _itemNumber) returns (uint){
+        return itemList[_itemNumber].sellerValue;
+    }
     
     function get_itemNumber_status(uint _itemNumber) returns (uint){
         return itemList[_itemNumber].status;
     }
 
-    function get_itemNumber_from_address(address _address, uint index) public returns(uint){
-        return addressList[_address][index].item;
+    function get_itemNumber_from_address(address _address, uint _index) public returns(uint){
+        return addressList[_address][_index].item;
     }
 
-    function cancel_item(uint _itemNumber) returns (uint) {
-        if (itemList[_itemNumber].sellerAddress == msg.sender && itemList[_itemNumber].status == 1) {
-            // seller.transfer(value)
-            itemList[_itemNumber].sellerAddress.transfer(itemList[_itemNumber].sellerValue);
-        }
+    // the seller can cancel anytime. if they do, the ETH gets returned
+    function cancel_item(uint _itemNumber) 
+        condition (itemList[_itemNumber].sellerAddress == msg.sender)
+        returns (uint) 
+    {            
+        // update the status to canceled=4
+        itemList[_itemNumber].status = 4; 
+
+        // transfer buyer value to seller
+        itemList[_itemNumber].sellerAddress.transfer(itemList[_itemNumber].sellerValue);
+
+        // transfer seller value to buyer
+        itemList[_itemNumber].buyerAddress.transfer(itemList[_itemNumber].buyerValue);
+
+        // return the status
+        return itemList[_itemNumber].status;
+    }
+
+    // if the buyer value is twice as much as the sellerValue && the item has not been bought aka status = 1)
+    function buy_item(uint _itemNumber)
+        payable
+        condition (itemList[_itemNumber].sellerValue * 2 == msg.value && itemList[_itemNumber].status == 1)
+        returns (uint)
+    {
+        // update the status to only_buyer_can_unlock=2
+        itemList[_itemNumber].status = 2;
+        // add buyer address to item
+        itemList[_itemNumber].buyerAddress = msg.sender;
+        // add buyer value to item
+        itemList[_itemNumber].buyerValue = msg.value;
+
+        return itemList[_itemNumber].status;
+    }
+
+
+    // if address belongs to the buyer && status is 'only_buyer_can_unlock'
+    function recieved_item(uint _itemNumber) 
+        payable
+        condition ( itemList[_itemNumber].buyerAddress == msg.sender && itemList[_itemNumber].status == 2 )
+        returns (uint)
+    {
+        // NOTE: This actually allows both the buyer and the seller to block the refund - the withdraw pattern should be used.
+
+        // update the status to complete
+        itemList[_itemNumber].status = 3;
+
+        // transfer buyer value to seller
+        itemList[_itemNumber].sellerAddress.transfer(itemList[_itemNumber].buyerValue);
+
+        // transfer seller value to buyer
+        itemList[_itemNumber].buyerAddress.transfer(itemList[_itemNumber].sellerValue);
+
+        return itemList[_itemNumber].status;
     }
     
 }
-
-
-
-
-
-
-
-
-
-
